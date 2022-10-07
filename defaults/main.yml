@@ -1,0 +1,12 @@
+---
+s3s_config: []
+#  - name: example
+#    api_key: ''
+#    acc_loc: ''
+#    gtoken: ''
+#    bullettoken: ''
+#    session_token: ''
+#    f_gen: ''
+#    salmon: no
+#    timer_delay: ''
+

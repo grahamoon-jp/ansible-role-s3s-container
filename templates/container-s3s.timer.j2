@@ -1,0 +1,10 @@
+[Unit]
+Description=Runs Podman container-s3s-{{ name }}.service
+
+[Timer]
+OnBootSec=5min
+OnUnitInactiveSec={{ delay }}
+
+[Install]
+WantedBy=timers.target
+
