@@ -37,7 +37,7 @@
   containers.podman.podman_container:
     name: "s3s-{{ item.name }}"
     image: s3s
-    command: "python s3s.py -r{{ ' -nsr' if not item.salmon | default(False) }}"
+    command: "python s3s.py -r -nsr"
     interactive: yes
     tty: yes
     volume:
@@ -46,6 +46,22 @@
       path: "{{ ansible_user_dir }}/.config/systemd/user"
     recreate: "{{ s3s_git.changed }}"
     state: present
+  loop: "{{ s3s_config }}"
+
+- name: Create s3s container for salmon
+  containers.podman.podman_container:
+    name: "s3s-{{ item.name }}-salmon"
+    image: s3s
+    command: "python s3s.py -r -osr"
+    interactive: yes
+    tty: yes
+    volume:
+      - "{{ ansible_user_dir }}/s3s/config.txt.{{ item.name }}:/app/config.txt:z"
+    generate_systemd:
+      path: "{{ ansible_user_dir }}/.config/systemd/user"
+    recreate: "{{ s3s_git.changed }}"
+    state: present
+  when: item.salmon | default(False)
   loop: "{{ s3s_config }}"
 
 - name: Copy timer unit file
@@ -57,6 +73,16 @@
     delay: "{{ item.timer_delay | default('5min') }}"
   loop: "{{ s3s_config }}"
 
+- name: Copy timer unit file for salmon
+  ansible.builtin.template:
+    src: container-s3s.timer.j2
+    dest: "{{ ansible_user_dir }}/.config/systemd/user/container-s3s-{{ item.name }}-salmon.timer"
+  vars:
+    name: "{{ item.name }}-salmon"
+    delay: "{{ item.timer_delay | default('5min') }}"
+  when: item.salmon | default(False)
+  loop: "{{ s3s_config }}"
+
 - name: Start and enable timer unit
   ansible.builtin.systemd:
     name: "container-s3s-{{ item.name }}.timer"
@@ -64,5 +90,15 @@
     enabled: yes
     state: started
     daemon_reload: yes
+  loop: "{{ s3s_config }}"
+
+- name: Start and enable timer unit for salmon
+  ansible.builtin.systemd:
+    name: "container-s3s-{{ item.name }}-salmon.timer"
+    scope: user
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when: item.salmon | default(False)
   loop: "{{ s3s_config }}"
 
