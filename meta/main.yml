@@ -1,5 +1,5 @@
 galaxy_info:
-  author: grahamoon-jp
+  author: grahamoon
   description: Create s3s container role
   license: Apache
   min_ansible_version: 2.10
