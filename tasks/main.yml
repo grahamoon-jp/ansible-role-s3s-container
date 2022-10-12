@@ -8,9 +8,19 @@
   register: s3s_git
 
 - name: Copy Containerfile
-  ansible.builtin.copy:
-    src: Containerfile
-    dest: "{{ ansible_user_dir }}/s3s/"
+  ansible.builtin.template:
+    src: Containerfile.j2
+    dest: "{{ ansible_user_dir }}/s3s/Containerfile"
+
+- name: Pull base image
+  containers.podman.podman_image:
+    name: docker.io/library/python
+    tag: "{{ s3s_python_version }}-{{ item }}"
+    force: "{{ s3s_git.changed }}"
+    state: present
+  loop:
+    - buster
+    - slim
 
 - name: Build s3s container image
   containers.podman.podman_image:

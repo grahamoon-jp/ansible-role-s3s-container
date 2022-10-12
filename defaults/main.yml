@@ -9,4 +9,5 @@ s3s_config: []
 #    f_gen: ''
 #    salmon: no
 #    timer_delay: ''
+s3s_python_version: 3.10
 
