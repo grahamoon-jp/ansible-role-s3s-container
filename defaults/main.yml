@@ -10,5 +10,5 @@ s3s_config: []
 #    salmon: no
 #    blackout: no
 #    timer_delay: ''
-s3s_python_version: 3.10
+s3s_python_version: '3.10'
 
