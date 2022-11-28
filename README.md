@@ -25,6 +25,7 @@ Role Variables
 |session_token|Token for accessing nintendo|
 |f_gen|Endpoint for generating f. (Default: `https://api.imink.app/f`|
 |salmon|Get salmon run data. (Default: `no`)|
+|blackout|Remove other player's names. (Default: `no`)|
 |timer_delay|Checking for new results every this configuration. (Default: `5min`)|
 
 Dependencies
