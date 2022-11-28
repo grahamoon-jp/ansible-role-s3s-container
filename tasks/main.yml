@@ -47,7 +47,7 @@
   containers.podman.podman_container:
     name: "s3s-{{ item.name }}"
     image: s3s
-    command: "python s3s.py -r -nsr"
+    command: "python s3s.py -r -nsr{{ ' --blackout' if item.blackout is defined and item.blackout }}"
     interactive: yes
     tty: yes
     volume:
@@ -62,7 +62,7 @@
   containers.podman.podman_container:
     name: "s3s-{{ item.name }}-salmon"
     image: s3s
-    command: "python s3s.py -r -osr"
+    command: "python s3s.py -r -osr{{ ' --blackout' if item.blackout is defined and item.blackout }}"
     interactive: yes
     tty: yes
     volume:

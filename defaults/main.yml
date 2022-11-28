@@ -8,6 +8,7 @@ s3s_config: []
 #    session_token: ''
 #    f_gen: ''
 #    salmon: no
+#    blackout: no
 #    timer_delay: ''
 s3s_python_version: 3.10
 
