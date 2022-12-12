@@ -33,6 +33,7 @@
   ansible.builtin.copy:
     content: "{{ config_data | to_nice_json }}"
     dest: "{{ ansible_user_dir }}/s3s/config.txt.{{ item.name }}"
+    force: no
   vars:
     config_data:
       api_key: "{{ item.api_key | default('') }}"
