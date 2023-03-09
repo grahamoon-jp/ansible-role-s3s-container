@@ -24,7 +24,7 @@
 - name: Build s3s container image
   containers.podman.podman_image:
     name: s3s
-    path: "{{ ansible_user_dir }}/s3s/"
+    path: "{{ tempdir.path }}"
     force: yes
     state: build
   register: build_image
