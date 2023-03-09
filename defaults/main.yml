@@ -10,5 +10,6 @@ s3s_config: []
 #    salmon: no
 #    blackout: no
 #    timer_delay: ''
+#    force_uploads: no
 s3s_python_version: '3.11'
 
