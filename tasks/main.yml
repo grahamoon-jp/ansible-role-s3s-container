@@ -55,7 +55,6 @@
       bullettoken: "{{ item.bullettoken | default('') }}"
       session_token: "{{ item.session_token | default('') }}"
       f_gen: "{{ item.f_gen | default('https://api.imink.app/f') }}"
-      force_uploads: "{{ item.force_uploads | default(False) }}"
   loop: "{{ s3s_config }}"
 
 - name: Create s3s container
