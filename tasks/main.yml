@@ -29,10 +29,29 @@
     force: "{{ s3s_git.changed }}"
     state: build
 
+- name: Set SELinux file context
+  community.general.sefcontext:
+    target: "{{ ansible_user_dir }}/.config/s3s(/.*)?"
+    setype: container_file_t
+    state: present
+
+- name: Create config directory
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/.config/s3s"
+    state: directory
+
+- name: Copy s3s config if previous version existed
+  ansible.builtin.copy:
+    src: "{{ ansible_user_dir }}/s3s/config.txt.{{ item.name }}"
+    dest: "{{ ansible_user_dir }}/.config/s3s/{{ item.name }}.txt"
+    remote_src: yes
+  ignore_errors: yes
+  loop: "{{ s3s_config }}"
+
 - name: Create s3s config
   ansible.builtin.copy:
     content: "{{ config_data | to_nice_json }}"
-    dest: "{{ ansible_user_dir }}/s3s/config.txt.{{ item.name }}"
+    dest: "{{ ansible_user_dir }}/.config/s3s/{{ item.name }}.txt"
     force: no
   vars:
     config_data:
@@ -52,7 +71,7 @@
     interactive: yes
     tty: yes
     volume:
-      - "{{ ansible_user_dir }}/s3s/config.txt.{{ item.name }}:/app/config.txt:z"
+      - "{{ ansible_user_dir }}/.config/s3s/{{ item.name }}.txt:/app/config.txt"
     generate_systemd:
       path: "{{ ansible_user_dir }}/.config/systemd/user"
     recreate: "{{ s3s_git.changed }}"
