@@ -1,22 +1,21 @@
 ---
-- name: Checkout s3s
-  ansible.builtin.git:
-    repo: https://github.com/frozenpandaman/s3s.git
-    dest: "{{ ansible_user_dir }}/s3s"
-    depth: 1
-    single_branch: yes
-  register: s3s_git
+- name: Create temporarily directory
+  ansible.builtin.tempfile:
+    state: directory
+  changed_when: no
+  register: tempdir
 
 - name: Copy Containerfile
   ansible.builtin.template:
     src: Containerfile.j2
-    dest: "{{ ansible_user_dir }}/s3s/Containerfile"
+    dest: "{{ tempdir.path }}/Containerfile"
+  changed_when: no
 
 - name: Pull base image
   containers.podman.podman_image:
     name: docker.io/library/python
     tag: "{{ s3s_python_version }}-{{ item }}"
-    force: "{{ s3s_git.changed }}"
+    force: yes
     state: present
   loop:
     - buster
@@ -26,8 +25,9 @@
   containers.podman.podman_image:
     name: s3s
     path: "{{ ansible_user_dir }}/s3s/"
-    force: "{{ s3s_git.changed }}"
+    force: yes
     state: build
+  register: build_image
 
 - name: Set SELinux file context
   community.general.sefcontext:
@@ -74,7 +74,7 @@
       - "{{ ansible_user_dir }}/.config/s3s/{{ item.name }}.txt:/app/config.txt"
     generate_systemd:
       path: "{{ ansible_user_dir }}/.config/systemd/user"
-    recreate: "{{ s3s_git.changed }}"
+    recreate: "{{ build_image.changed }}"
     state: present
   loop: "{{ s3s_config }}"
 
