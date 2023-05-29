@@ -1,92 +1,39 @@
 ---
-- name: Create temporarily directory
-  ansible.builtin.tempfile:
-    state: directory
-  changed_when: no
-  register: tempdir
-
-- name: Copy Containerfile
-  ansible.builtin.template:
-    src: Containerfile.j2
-    dest: "{{ tempdir.path }}/Containerfile"
-  changed_when: no
-
-- name: Pull base image
-  containers.podman.podman_image:
-    name: docker.io/library/python
-    tag: "{{ s3s_python_version }}-{{ item }}"
-    force: yes
-    state: present
-  loop:
-    - buster
-    - slim
-
-- name: Build s3s container image
-  containers.podman.podman_image:
-    name: s3s
-    path: "{{ tempdir.path }}"
-    force: yes
-    state: build
-  register: build_image
-
-- name: Create config directory
-  ansible.builtin.file:
-    path: "{{ ansible_user_dir }}/.config/s3s"
-    state: directory
-
-- name: Copy s3s config if previous version existed
-  ansible.builtin.copy:
-    src: "{{ ansible_user_dir }}/s3s/config.txt.{{ item.name }}"
-    dest: "{{ ansible_user_dir }}/.config/s3s/{{ item.name }}.txt"
-    remote_src: yes
-  ignore_errors: yes
-  loop: "{{ s3s_config }}"
-
-- name: Create s3s config
-  ansible.builtin.copy:
-    content: "{{ config_data | to_nice_json }}"
-    dest: "{{ ansible_user_dir }}/.config/s3s/{{ item.name }}.txt"
-    force: no
-  vars:
-    config_data:
-      api_key: "{{ item.api_key | default('') }}"
-      acc_loc: "{{ item.acc_loc | default('') }}"
-      gtoken: "{{ item.gtoken | default('') }}"
-      bullettoken: "{{ item.bullettoken | default('') }}"
-      session_token: "{{ item.session_token | default('') }}"
-      f_gen: "{{ item.f_gen | default('https://api.imink.app/f') }}"
-  loop: "{{ s3s_config }}"
-
-- name: Create s3s container
-  containers.podman.podman_container:
-    name: "s3s-{{ item.name }}"
-    image: s3s
-    command: "python s3s.py -r{{ '-nsr' if not item.salmon | default(False) }}{{ ' --blackout' if item.blackout | default(False) }}"
-    interactive: yes
-    tty: yes
-    volume:
-      - "{{ ansible_user_dir }}/.config/s3s/{{ item.name }}.txt:/app/config.txt:z"
-    generate_systemd:
-      path: "{{ ansible_user_dir }}/.config/systemd/user"
-    recreate: "{{ build_image.changed }}"
-    state: present
-  loop: "{{ s3s_config }}"
-
-- name: Copy timer unit file
-  ansible.builtin.template:
-    src: container-s3s.timer.j2
-    dest: "{{ ansible_user_dir }}/.config/systemd/user/container-s3s-{{ item.name }}.timer"
-  vars:
-    name: "{{ item.name }}"
-    delay: "{{ item.timer_delay | default('5min') }}"
-  loop: "{{ s3s_config }}"
-
-- name: Start and enable timer unit
+- name: Stop and disable timer
   ansible.builtin.systemd:
     name: "container-s3s-{{ item.name }}.timer"
     scope: user
-    enabled: yes
-    state: started
-    daemon_reload: yes
+    enabled: no
+    state: stopped
   loop: "{{ s3s_config }}"
+
+- name: Stop service
+  ansible.builtin.systemd:
+    name: "container-s3s-{{ item.name }}.service"
+    scope: user
+    state: stopped
+  loop: "{{ s3s_config }}"
+
+- name: Delete timer unit file
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/.config/systemd/user/container-s3s-{{ item.name }}.timer"
+    state: absent
+  loop: "{{ s3s_config }}"
+
+- name: Delete service unit file
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/.config/systemd/user/container-s3s-{{ item.name }}.service"
+    state: absent
+  loop: "{{ s3s_config }}"
+
+- name: Delete s3s container
+  containers.podman.podman_container:
+    name: "s3s-{{ item.name }}"
+    state: absent
+  loop: "{{ s3s_config }}"
+
+- name: Delete config directory
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/.config/s3s"
+    state: absent
 

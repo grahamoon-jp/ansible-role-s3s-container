@@ -1,8 +1,0 @@
----
-- hosts: localhost
-  vars:
-    s3s_config:
-      - name: test
-  roles:
-    - ansible-role-s3s-container
-
